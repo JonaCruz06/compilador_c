@@ -9,15 +9,14 @@
  * 1. Análisis léxico: generación de tokens.
  * 2. Análisis sintáctico: validación de la gramática y construcción del AST.
  * 3. Análisis semántico: verificación de tipos, variables y ámbitos.
- *
- * Desde este archivo se mandan llamar las funciones principales del lexer,
- * parser y analizador semántico.
  */
 
 #include <stdio.h>
 #include <string.h>
-
+#include <stdlib.h>
 #include "lexer.h"
+#include "parser.h"
+#include "semantic.h"
 
 #define SOURCE_EXTENSION ".cmra"
 
@@ -59,20 +58,28 @@ int main(int argc, char *argv[]) {
     printf("\nAnalisis lexico completado correctamente.\n");
     lexer_print_tokens(&tokens);
 
-    /*
-     * Punto de conexion para el trabajo del compañero:
-     *
-     * Cuando el parser este implementado, aqui se podria continuar con:
-     *
-     * ASTNode *ast = parser_parse(&tokens);
-     *
-     * Y despues:
-     *
-     * semantic_analyze(ast);
-     *
-     * Por ahora, este main deja lista la fase lexica y la lista de tokens.
-     */
+    // --- FASE 2: PARSER (Análisis Sintáctico) ---
+    printf("\nIniciando Analisis Sintactico...\n");
+    ASTNode *ast = parser_parse(&tokens);
+    if (ast == NULL) {
+        printf("Error: Analisis sintactico fallido.\n");
+        token_list_free(&tokens);
+        return 1;
+    }
+    printf("Analisis sintactico (AST) generado correctamente.\n");
 
+    // --- FASE 3: SEMÁNTICO (Análisis Semántico) ---
+    printf("\nIniciando Analisis Semantico...\n");
+    if (!semantic_analyze(ast)) {
+        printf("Error: Analisis semantico fallido.\n");
+        ast_free(ast);
+        token_list_free(&tokens);
+        return 1;
+    }
+    printf("Analisis semantico completado. El codigo es valido.\n");
+
+    // Liberación de memoria de todas las fases
+    ast_free(ast);
     token_list_free(&tokens);
 
     return 0;

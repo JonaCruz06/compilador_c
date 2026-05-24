@@ -9,3 +9,14 @@
  * El analizador semántico utiliza el AST generado por el parser para validar
  * que el programa tenga sentido de acuerdo con las reglas del lenguaje.
  */
+
+
+ #ifndef SEMANTIC_H
+#define SEMANTIC_H
+
+#include "parser.h"
+
+// Inicia el análisis semántico y valida reglas como tipos y anidamiento
+int semantic_analyze(ASTNode *ast);
+
+#endif
