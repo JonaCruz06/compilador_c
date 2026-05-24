@@ -13,3 +13,67 @@
  * Desde este archivo se mandan llamar las funciones principales del lexer,
  * parser y analizador semántico.
  */
+
+#include <stdio.h>
+#include <string.h>
+
+#include "lexer.h"
+
+#define SOURCE_EXTENSION ".cmra"
+
+static int has_valid_extension(const char *file_path) {
+    const char *dot = strrchr(file_path, '.');
+
+    if (dot == NULL) {
+        return 0;
+    }
+
+    return strcmp(dot, SOURCE_EXTENSION) == 0;
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Uso correcto:\n");
+        printf("  ./compilador archivo.cmra\n");
+        return 1;
+    }
+
+    const char *file_path = argv[1];
+
+    if (!has_valid_extension(file_path)) {
+        printf("Error: el archivo debe tener extension %s\n", SOURCE_EXTENSION);
+        return 1;
+    }
+
+    TokenList tokens;
+    token_list_init(&tokens);
+
+    printf("Analizando archivo: %s\n", file_path);
+
+    if (!lexer_analyze_file(file_path, &tokens)) {
+        printf("\nAnalisis lexico fallido.\n");
+        token_list_free(&tokens);
+        return 1;
+    }
+
+    printf("\nAnalisis lexico completado correctamente.\n");
+    lexer_print_tokens(&tokens);
+
+    /*
+     * Punto de conexion para el trabajo del compañero:
+     *
+     * Cuando el parser este implementado, aqui se podria continuar con:
+     *
+     * ASTNode *ast = parser_parse(&tokens);
+     *
+     * Y despues:
+     *
+     * semantic_analyze(ast);
+     *
+     * Por ahora, este main deja lista la fase lexica y la lista de tokens.
+     */
+
+    token_list_free(&tokens);
+
+    return 0;
+}

@@ -1,0 +1,8 @@
+int edad = 21;
+float promedio = 9.5;
+bool activo = true;
+string nombre = "Jonathan";
+
+if (edad > 18) {
+    edad = edad + 1;
+}

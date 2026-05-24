@@ -1,0 +1,2 @@
+int edad = 21;
+edad = "hola";
