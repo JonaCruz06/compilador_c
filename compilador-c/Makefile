@@ -10,7 +10,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -Isrc
 
-SRC = src/main.c src/lexer.c
+SRC = src/main.c src/lexer.c src/parser.c src/semantic.c
 OUT = compilador
 
 all:

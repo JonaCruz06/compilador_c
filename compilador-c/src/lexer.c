@@ -20,6 +20,7 @@
 #include <string.h>
 #include <ctype.h>
 
+// Nombres de los tokens usados para imprimirlos de forma legible.
 static const char *TOKEN_NAMES[] = {
     "TOKEN_EOF",
 
@@ -71,12 +72,14 @@ static const char *TOKEN_NAMES[] = {
     "TOKEN_UNKNOWN"
 };
 
+// Inicializa una lista vacía para almacenar tokens.
 void token_list_init(TokenList *list) {
     list->items = NULL;
     list->count = 0;
     list->capacity = 0;
 }
 
+// Libera la memoria reservada para la lista de tokens.
 void token_list_free(TokenList *list) {
     free(list->items);
     list->items = NULL;
@@ -84,6 +87,7 @@ void token_list_free(TokenList *list) {
     list->capacity = 0;
 }
 
+// Agrega un nuevo token a la lista dinámica de tokens.
 static int add_token(TokenList *list, TokenType type, const char *lexeme, int line, int column) {
     if (list->count >= list->capacity) {
         int new_capacity = list->capacity == 0 ? 16 : list->capacity * 2;
@@ -112,6 +116,7 @@ static int add_token(TokenList *list, TokenType type, const char *lexeme, int li
     return 1;
 }
 
+// Determina si una palabra es reservada o un identificador.
 static TokenType get_keyword_type(const char *word) {
     if (strcmp(word, "int") == 0) return TOKEN_KW_INT;
     if (strcmp(word, "float") == 0) return TOKEN_KW_FLOAT;
@@ -132,6 +137,7 @@ static TokenType get_keyword_type(const char *word) {
     return TOKEN_IDENTIFIER;
 }
 
+// Lee el archivo fuente y genera los tokens del lenguaje.
 int lexer_analyze_file(const char *file_path, TokenList *tokens) {
     FILE *file = fopen(file_path, "r");
 
@@ -342,6 +348,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
     return 1;
 }
 
+// Imprime en pantalla la lista de tokens generados.
 void lexer_print_tokens(const TokenList *tokens) {
     printf("\nTokens generados:\n");
     printf("---------------------------------------------\n");
@@ -356,6 +363,7 @@ void lexer_print_tokens(const TokenList *tokens) {
     printf("---------------------------------------------\n");
 }
 
+// Devuelve el nombre en texto de un tipo de token.
 const char *token_type_to_string(TokenType type) {
     if (type >= TOKEN_EOF && type <= TOKEN_UNKNOWN) {
         return TOKEN_NAMES[type];

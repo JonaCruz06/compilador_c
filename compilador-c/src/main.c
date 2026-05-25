@@ -20,6 +20,7 @@
 
 #define SOURCE_EXTENSION ".cmra"
 
+// Verifica que el archivo recibido tenga la extensión esperada del lenguaje.
 static int has_valid_extension(const char *file_path) {
     const char *dot = strrchr(file_path, '.');
 
@@ -30,6 +31,7 @@ static int has_valid_extension(const char *file_path) {
     return strcmp(dot, SOURCE_EXTENSION) == 0;
 }
 
+// Ejecuta el flujo principal del compilador: léxico, sintáctico y semántico.
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         printf("Uso correcto:\n");

@@ -79,12 +79,19 @@ typedef struct {
     int capacity;
 } TokenList;
 
+// Inicializa la lista dinámica donde se guardarán los tokens generados.
 void token_list_init(TokenList *list);
+
+// Libera la memoria utilizada por la lista de tokens.
 void token_list_free(TokenList *list);
 
+// Analiza un archivo fuente y genera la lista de tokens correspondiente.
 int lexer_analyze_file(const char *file_path, TokenList *tokens);
+
+// Muestra en pantalla los tokens generados por el lexer.
 void lexer_print_tokens(const TokenList *tokens);
 
+// Convierte un tipo de token en texto para poder imprimirlo.
 const char *token_type_to_string(TokenType type);
 
 #endif
