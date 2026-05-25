@@ -1,16 +1,3 @@
-/*
- * main.c
- *
- * Este archivo funciona como punto de entrada del programa.
- * Se encarga de recibir el archivo fuente con extensión personalizada,
- * validar que pueda abrirse correctamente y coordinar las fases principales
- * del Front-End del compilador:
- *
- * 1. Análisis léxico: generación de tokens.
- * 2. Análisis sintáctico: validación de la gramática y construcción del AST.
- * 3. Análisis semántico: verificación de tipos, variables y ámbitos.
- */
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -60,7 +47,7 @@ int main(int argc, char *argv[]) {
     printf("\nAnalisis lexico completado correctamente.\n");
     lexer_print_tokens(&tokens);
 
-    // --- FASE 2: PARSER (Análisis Sintáctico) ---
+    //Fase 2: Parser (Análisis Sintáctico)
     printf("\nIniciando Analisis Sintactico...\n");
     ASTNode *ast = parser_parse(&tokens);
     if (ast == NULL) {
@@ -70,7 +57,7 @@ int main(int argc, char *argv[]) {
     }
     printf("Analisis sintactico (AST) generado correctamente.\n");
 
-    // --- FASE 3: SEMÁNTICO (Análisis Semántico) ---
+    //Fase 3: Semántico (Análisis Semántico)
     printf("\nIniciando Analisis Semantico...\n");
     if (!semantic_analyze(ast)) {
         printf("Error: Analisis semantico fallido.\n");

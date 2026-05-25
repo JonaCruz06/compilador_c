@@ -1,18 +1,3 @@
-/*
- * lexer.c
- *
- * Este archivo implementa el analizador léxico del compilador.
- * Su función principal es recorrer el archivo fuente carácter por carácter
- * para identificar palabras reservadas, identificadores, números, cadenas,
- * operadores, delimitadores y símbolos válidos del lenguaje.
- *
- * También se encarga de detectar errores léxicos, como caracteres no válidos
- * o tokens mal formados, e informar la línea donde ocurren.
- *
- * La salida de este módulo es una lista o secuencia de tokens que será
- * utilizada por el analizador sintáctico.
- */
-
 #include "lexer.h"
 
 #include <stdio.h>
@@ -72,14 +57,14 @@ static const char *TOKEN_NAMES[] = {
     "TOKEN_UNKNOWN"
 };
 
-// Inicializa una lista vacía para almacenar tokens.
+// Inicializa una lista vacía para almacenar tokens
 void token_list_init(TokenList *list) {
     list->items = NULL;
     list->count = 0;
     list->capacity = 0;
 }
 
-// Libera la memoria reservada para la lista de tokens.
+// Libera la memoria reservada para la lista de tokens
 void token_list_free(TokenList *list) {
     free(list->items);
     list->items = NULL;
@@ -137,10 +122,12 @@ static TokenType get_keyword_type(const char *word) {
     return TOKEN_IDENTIFIER;
 }
 
-// Lee el archivo fuente y genera los tokens del lenguaje.
+// Leer el archivo fuente y generar los tokens del lenguaje.
 int lexer_analyze_file(const char *file_path, TokenList *tokens) {
+    // Se abre el archivo fuente en modo lectura.
     FILE *file = fopen(file_path, "r");
 
+    // Se valida que el archivo exista y se pueda abrir correctamente.
     if (file == NULL) {
         printf("Error: no se pudo abrir el archivo '%s'.\n", file_path);
         return 0;
@@ -150,23 +137,28 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
     int line = 1;
     int column = 1;
 
+    // Se recorre el archivo carácter por carácter hasta llegar al final (EOF).
     while ((c = fgetc(file)) != EOF) {
+        // Ignorar espacios en blanco, tabulaciones y retornos de carro.
         if (c == ' ' || c == '\t' || c == '\r') {
             column++;
             continue;
         }
 
+        // Se incrementa el contador de líneas y reiniciar la columna al detectar un salto de línea.
         if (c == '\n') {
             line++;
             column = 1;
             continue;
         }
 
+        // Se identifican palabras reservadas o nombres de variables
         if (isalpha(c) || c == '_') {
             char buffer[MAX_LEXEME_LENGTH];
             int i = 0;
             int start_column = column;
 
+            // Se extraen todos los caracteres alfanuméricos consecutivos de la palabra
             do {
                 if (i < MAX_LEXEME_LENGTH - 1) {
                     buffer[i++] = (char)c;
@@ -182,6 +174,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
                 ungetc(c, file);
             }
 
+            // Se clasifica la palabra extraída para saber su tipo específico.
             TokenType type = get_keyword_type(buffer);
 
             if (!add_token(tokens, type, buffer, line, start_column)) {
@@ -192,12 +185,14 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
             continue;
         }
 
+        // Se identifican números enteros o flotantes
         if (isdigit(c)) {
             char buffer[MAX_LEXEME_LENGTH];
             int i = 0;
             int start_column = column;
             int has_dot = 0;
 
+            // Se extraen los dígitos numéricos con un punto decimal
             do {
                 if (c == '.') {
                     has_dot = 1;
@@ -217,6 +212,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
                 ungetc(c, file);
             }
 
+            // Se asigna el tipo de token dependiendo de si contiene un punto decimal o no
             TokenType type = has_dot ? TOKEN_FLOAT_LITERAL : TOKEN_INT_LITERAL;
 
             if (!add_token(tokens, type, buffer, line, start_column)) {
@@ -227,6 +223,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
             continue;
         }
 
+        // Se procesan cadenas de texto delimitadas por comillas.
         if (c == '"') {
             char buffer[MAX_LEXEME_LENGTH];
             int i = 0;
@@ -235,6 +232,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
             column++;
             c = fgetc(file);
 
+            // Se leen caracteres hasta encontrar el cierre de comillas o un salto de línea
             while (c != EOF && c != '"' && c != '\n') {
                 if (i < MAX_LEXEME_LENGTH - 1) {
                     buffer[i++] = (char)c;
@@ -244,6 +242,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
                 c = fgetc(file);
             }
 
+            // Se reporta un error si la cadena se termina sin comillas de cierre.
             if (c != '"') {
                 printf("Error lexico en linea %d, columna %d: cadena sin cerrar.\n",
                        line, start_column);
@@ -270,6 +269,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
             lexeme[1] = (char)next;
         }
 
+        // Se reconocen operadores relacionales o lógicos compuestos por dos caracteres.
         if (c == '=' && next == '=') {
             add_token(tokens, TOKEN_EQUAL, lexeme, line, start_column);
             column += 2;
@@ -312,6 +312,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
 
         lexeme[1] = '\0';
 
+        // Clasificar operadores aritméticos, de asignación y delimitadores de un solo carácter.
         switch (c) {
             case '+': add_token(tokens, TOKEN_PLUS, lexeme, line, start_column); break;
             case '-': add_token(tokens, TOKEN_MINUS, lexeme, line, start_column); break;
@@ -332,6 +333,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
             case '{': add_token(tokens, TOKEN_LBRACE, lexeme, line, start_column); break;
             case '}': add_token(tokens, TOKEN_RBRACE, lexeme, line, start_column); break;
 
+            // Se reporta un error léxico si el carácter leído no pertenece a los permitidos por el lenguaje
             default:
                 printf("Error lexico en linea %d, columna %d: caracter no valido '%c'.\n",
                        line, column, c);
@@ -342,6 +344,7 @@ int lexer_analyze_file(const char *file_path, TokenList *tokens) {
         column++;
     }
 
+    // Se agrega el token final para indicar la conclusión de la lectura del archivo
     add_token(tokens, TOKEN_EOF, "EOF", line, column);
 
     fclose(file);

@@ -1,19 +1,3 @@
-/*
- * parser.c
- *
- * Este archivo implementa el analizador sintáctico del compilador.
- * Su función es revisar que la secuencia de tokens generada por el lexer
- * cumpla con la gramática del lenguaje definida en BNF.
- *
- * En este módulo se reconocen declaraciones de variables, asignaciones,
- * expresiones y estructuras de control como if, if-else, if-elseif, for,
- * while y do-while.
- *
- * Además, durante el análisis sintáctico se construye el Árbol de Sintaxis
- * Abstracta (AST), el cual representa la estructura lógica del programa y
- * será utilizado durante el análisis semántico.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,12 +8,14 @@ static TokenList *t_list;
 static int current_pos = 0;
 static int syntax_errors = 0; // Contador para detener el compilador
 
+// Se obtiene el token actual sobre el cual está trabajando el analizador.
 static Token get_current_token() {
     if (current_pos < t_list->count) return t_list->items[current_pos];
     Token eof = {TOKEN_EOF, "EOF", 0, 0};
     return eof;
 }
 
+// Se avanza la posición en la lista para leer el siguiente token.
 static void advance() {
     if (current_pos < t_list->count) current_pos++;
 }
@@ -42,6 +28,7 @@ static int match(TokenType type) {
     return 0;
 }
 
+// Se exige la presencia de un token específico; de lo contrario, se registra un error sintáctico.
 static void expect(TokenType type) {
     if (get_current_token().type == type) {
         advance();
@@ -49,10 +36,11 @@ static void expect(TokenType type) {
         printf("Error Sintactico en linea %d: Se esperaba '%s' pero se encontro '%s'\n",
                get_current_token().line, token_type_to_string(type), get_current_token().lexeme);
         syntax_errors++;
-        advance(); // Recuperación simple
+        advance(); // Recuperación simple para intentar seguir analizando
     }
 }
 
+// Se reserva memoria dinámica y se inicializa un nuevo nodo para el Árbol de Sintaxis Abstracta (AST).
 static ASTNode* create_node(ASTNodeType type, Token t) {
     ASTNode *node = (ASTNode*)malloc(sizeof(ASTNode));
     node->type = type;
@@ -66,6 +54,7 @@ static ASTNode* create_node(ASTNodeType type, Token t) {
     return node;
 }
 
+// Se añaden instrucciones (nodos hijos) al bloque de código de una estructura, ampliando la memoria si es necesario.
 static void add_to_body(ASTNode *parent, ASTNode *child) {
     if (!parent || !child) return;
     if (parent->body_capacity == 0) {
@@ -82,6 +71,7 @@ static ASTNode* parse_expression();
 static ASTNode* parse_statement();
 static void parse_block(ASTNode *parent);
 
+// Se procesan los factores básicos de una expresión, como literales, variables o expresiones entre paréntesis.
 static ASTNode* parse_factor() {
     Token t = get_current_token();
     if (t.type == TOKEN_IDENTIFIER || t.type == TOKEN_INT_LITERAL ||
@@ -101,6 +91,7 @@ static ASTNode* parse_factor() {
     return NULL;
 }
 
+// Se agrupan los factores multiplicativos y de división manteniendo la precedencia.
 static ASTNode* parse_term() {
     ASTNode *node = parse_factor();
     while (get_current_token().type == TOKEN_STAR || get_current_token().type == TOKEN_SLASH) {
@@ -115,6 +106,7 @@ static ASTNode* parse_term() {
     return node;
 }
 
+// Se construyen las expresiones sumando, restando o comparando los términos previamente agrupados.
 static ASTNode* parse_expression() {
     ASTNode *node = parse_term();
     while (get_current_token().type == TOKEN_PLUS || get_current_token().type == TOKEN_MINUS ||
@@ -132,6 +124,7 @@ static ASTNode* parse_expression() {
     return node;
 }
 
+// Se procesa un bloque completo de código delimitado por llaves { }.
 static void parse_block(ASTNode *parent) {
     expect(TOKEN_LBRACE);
     while (get_current_token().type != TOKEN_RBRACE && get_current_token().type != TOKEN_EOF) {
@@ -141,6 +134,7 @@ static void parse_block(ASTNode *parent) {
     expect(TOKEN_RBRACE);
 }
 
+// Se construye el nodo para la estructura de control 'if', encadenando opcionalmente los bloques 'elseif' y 'else'.
 static ASTNode* parse_if_statement() {
     Token t = get_current_token();
     expect(TOKEN_KW_IF);
@@ -180,6 +174,7 @@ static ASTNode* parse_if_statement() {
     return if_node;
 }
 
+// Se construye el nodo para el ciclo 'while', vinculando su condición y su bloque interno.
 static ASTNode* parse_while_statement() {
     Token t = get_current_token();
     expect(TOKEN_KW_WHILE);
@@ -210,6 +205,7 @@ static ASTNode* parse_do_while_statement() {
     return do_node;
 }
 
+// Se estructura el nodo 'for', separando la declaración inicial, la condición de paro y el incremento.
 static ASTNode* parse_for_statement() {
     Token t = get_current_token();
     expect(TOKEN_KW_FOR);
@@ -236,6 +232,7 @@ static ASTNode* parse_for_statement() {
     return for_node;
 }
 
+// Se diferencian las instrucciones simples, identificando si es una nueva declaración de variable o una reasignación.
 static ASTNode* parse_declaration_or_assignment() {
     Token t = get_current_token();
     
@@ -279,6 +276,7 @@ static ASTNode* parse_statement() {
     return parse_declaration_or_assignment();
 }
 
+// Se inicia el proceso principal del parser, recorriendo los tokens para ensamblar el árbol completo del programa.
 ASTNode* parser_parse(TokenList *tokens) {
     t_list = tokens;
     current_pos = 0;
@@ -292,7 +290,7 @@ ASTNode* parser_parse(TokenList *tokens) {
         if (stmt) add_to_body(program, stmt);
     }
     
-    // Si hay errores, liberamos la memoria y evitamos continuar
+    // Si se encontraron errores durante la lectura, se purga la memoria y se aborta la compilación.
     if (syntax_errors > 0) {
         printf("\nEl analisis sintactico termino con %d error(es).\n", syntax_errors);
         ast_free(program);
@@ -302,6 +300,7 @@ ASTNode* parser_parse(TokenList *tokens) {
     return program;
 }
 
+// Se recorre recursivamente el AST para liberar toda la memoria ocupada por los nodos una vez finalizado su uso.
 void ast_free(ASTNode *node) {
     if (!node) return;
     ast_free(node->left);
